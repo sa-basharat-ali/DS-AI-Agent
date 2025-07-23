@@ -36,8 +36,9 @@ class GroqDataScienceAgent:
     
     def ask(self, query, system_prompt=None):
         """Ask the model a question and get a response."""
+        # Ensure we always return a tuple (response, response_time) so callers can safely unpack
         if not self.api_key:
-            return "⚠️ API key not set. Please enter your Groq API key in the sidebar."
+            return "⚠️ API key not set. Please enter your Groq API key in the sidebar.", 0
             
         default_system_prompt = """You are a helpful data science assistant. 
         You provide clear, accurate information about data analysis, statistics, machine learning, 
