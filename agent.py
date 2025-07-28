@@ -1,12 +1,10 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
 import os
 import requests
-import json
 import time
 from dotenv import load_dotenv
+from typing import Tuple
 
 # Load environment variables
 load_dotenv()
@@ -18,7 +16,7 @@ class GroqDataScienceAgent:
         # Get API key from environment variable, Streamlit secrets, or directly
         try:
             self.api_key = api_key or os.getenv("GROQ_API_KEY") or st.secrets["GROQ_API_KEY"]
-        except:
+        except Exception:
             self.api_key = None
         
         # API endpoint
@@ -34,10 +32,13 @@ class GroqDataScienceAgent:
         """Update the model being used."""
         self.model_id = model_id
     
-    def ask(self, query, system_prompt=None):
+    def ask(self, query, system_prompt=None) -> Tuple[str, float]:
         """Ask the model a question and get a response."""
         if not self.api_key:
-            return "⚠️ API key not set. Please enter your Groq API key in the sidebar."
+            return (
+                "⚠️ API key not set. Please enter your Groq API key in the sidebar.",
+                0.0,
+            )
             
         default_system_prompt = """You are a helpful data science assistant. 
         You provide clear, accurate information about data analysis, statistics, machine learning, 
@@ -84,7 +85,7 @@ class GroqDataScienceAgent:
                 answer = response_data["choices"][0]["message"]["content"]
                 
                 # Calculate response time
-                response_time = end_time - start_time
+                response_time: float = end_time - start_time
                 
                 # Update conversation history
                 self.conversation_history.append({"role": "user", "content": query})
@@ -93,14 +94,17 @@ class GroqDataScienceAgent:
                 return answer, response_time
         
         except requests.exceptions.RequestException as e:
-            return f"Error calling Groq API: {str(e)}\nResponse: {getattr(e.response, 'text', 'No response text')}", 0
+            return (
+                f"Error calling Groq API: {str(e)}\nResponse: {getattr(e.response, 'text', 'No response text')}",
+                0.0,
+            )
         except Exception as e:
-            return f"Error processing response: {str(e)}", 0
+            return f"Error processing response: {str(e)}", 0.0
     
     def analyze_dataframe(self, df, question):
         """Get the model to analyze a pandas DataFrame."""
         # Create a summary of the DataFrame
-        df_info = f"DataFrame info:\n"
+        df_info = "DataFrame info:\n"
         df_info += f"- Shape: {df.shape}\n"
         df_info += f"- Columns: {', '.join(df.columns.tolist())}\n"
         df_info += f"- Data types:\n{df.dtypes.to_string()}\n"
@@ -119,7 +123,7 @@ class GroqDataScienceAgent:
     def suggest_visualization(self, df, columns=None):
         """Suggest visualizations for the given DataFrame."""
         # Create a summary of the DataFrame
-        df_info = f"DataFrame info:\n"
+        df_info = "DataFrame info:\n"
         df_info += f"- Shape: {df.shape}\n"
         df_info += f"- Columns: {', '.join(df.columns.tolist())}\n"
         df_info += f"- Data types:\n{df.dtypes.to_string()}\n"
